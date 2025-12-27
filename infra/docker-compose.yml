@@ -1,28 +1,47 @@
 services:
+
   postgres:
+    build: infra/postgres
     image: pgvector/pgvector:pg16
-    container_name: diabes_postgres
+    container_name: ${POSTGRES_CONTAINER_NAME}
     restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-diabes}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    shm_size: 128mb
     networks:
-      - app_net
+      - ${NETWORK_NAME}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '${POSTGRES_PORT_HOST}:${POSTGRES_PORT}'
+    volumes:
+      - infra/postgres/postgres-data:/var/lib/postgresql/data
+      - infra/postgres/postgres/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-diabes}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
-    image: redis:alpine
-    container_name: diabes_redis
+    build: .docker/redis
+    image: redis:7.4.0-alpine
+    container_name: ${REDIS_CONTAINER_NAME}
     restart: always
+    ports:
+      - '${REDIS_EXTERNAL_PORT}:${REDIS_INTERNAL_PORT}'
+    environment:
+      - REDIS_ARGS=--save 60 1 --appendonly yes
     networks:
-      - app_net
+      - ${NETWORK_NAME}
+    volumes:
+      - .docker/redis-data:/var/lib/redis/data
+      - .docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - .docker/redis/logs:/var/log/redis
+    command: >
+      sh -c "redis-server /usr/local/etc/redis/redis.conf 
+      --port ${REDIS_INTERNAL_PORT} 
+      --requirepass ${REDIS_PASSWORD}"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -41,13 +60,14 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - app_net
+      - ${NETWORK_NAME}
 
   api:
+    init: true
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
-    container_name: diabes_api
+    container_name: ${API_CONTAINER_NAME}
     restart: always
     command: pnpm -C apps/api start:dev
     ports:
@@ -68,7 +88,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - app_net
+      - ${NETWORK_NAME}
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
@@ -76,9 +96,10 @@ services:
       retries: 5
 
   crawler:
+    init: true
     build:
       context: ../apps/crawler
-    container_name: diabes_crawler
+    container_name: ${CRAWLER_CONTAINER_NAME}
     restart: always
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -87,12 +108,13 @@ services:
       api:
         condition: service_started
     networks:
-      - app_net
+      - ${NETWORK_NAME}
 
   embedder:
+    init: true
     build:
       context: ../apps/embedder
-    container_name: diabes_embedder
+    container_name: ${EMBEDDER_CONTAINER_NAME}
     restart: always
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -101,22 +123,11 @@ services:
       api:
         condition: service_started
     networks:
-      - app_net
-
-  adminer:
-    image: adminer
-    container_name: diabes_adminer
-    restart: always
-    ports:
-      - "8080:8080"
-    networks:
-      - app_net
-    depends_on:
-      - postgres
+      - ${NETWORK_NAME}
 
 volumes:
   postgres_data:
 
 networks:
-  app_net:
+  ${NETWORK_NAME}:
     driver: bridge
