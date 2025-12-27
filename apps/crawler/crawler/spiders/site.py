@@ -54,7 +54,7 @@ class SiteSpider(BaseSpider):
         if not self.start_urls:
             raise ValueError(f"Missing env SITE_{site_key}_START_URLS")
 
-    async def start(self):
+    def _iter_start_requests(self):
         for url in self.start_urls:
             yield self.make_request(
                 url,
@@ -62,6 +62,13 @@ class SiteSpider(BaseSpider):
                 use_playwright=self.use_playwright,
                 wait_for_selector=self.wait_for_selector,
             )
+
+    def start_requests(self):
+        yield from self._iter_start_requests()
+
+    async def start(self):
+        for request in self._iter_start_requests():
+            yield request
 
     def parse(self, response):
         title = normalize_whitespace(response.css("title::text").get())
