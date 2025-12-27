@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS "vector";
 
 -- CreateTable
-CREATE TABLE "Document" (
+CREATE TABLE "documents" (
     "id" TEXT NOT NULL,
     "url" TEXT NOT NULL,
     "title" TEXT,
@@ -13,11 +13,11 @@ CREATE TABLE "Document" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Document_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "documents_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Chunk" (
+CREATE TABLE "chunks" (
     "id" TEXT NOT NULL,
     "documentId" TEXT NOT NULL,
     "heading" TEXT,
@@ -28,21 +28,21 @@ CREATE TABLE "Chunk" (
     "position" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "Chunk_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "chunks_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "ChunkEmbedding" (
+CREATE TABLE "chunk_embeddings" (
     "chunkId" TEXT NOT NULL,
     "embedding" vector(1536) NOT NULL,
     "model" TEXT NOT NULL DEFAULT 'text-embedding-ada-002',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "ChunkEmbedding_pkey" PRIMARY KEY ("chunkId")
+    CONSTRAINT "chunk_embeddings_pkey" PRIMARY KEY ("chunkId")
 );
 
 -- CreateTable
-CREATE TABLE "CrawlRun" (
+CREATE TABLE "crawl_runs" (
     "id" TEXT NOT NULL,
     "status" TEXT NOT NULL,
     "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -50,11 +50,11 @@ CREATE TABLE "CrawlRun" (
     "stats" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "CrawlRun_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "crawl_runs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "QALog" (
+CREATE TABLE "qalogs" (
     "id" TEXT NOT NULL,
     "question" TEXT NOT NULL,
     "topChunks" JSONB NOT NULL,
@@ -62,23 +62,23 @@ CREATE TABLE "QALog" (
     "safetyFlags" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "QALog_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "qalogs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Document_url_key" ON "Document"("url");
+CREATE UNIQUE INDEX "documents_url_key" ON "documents"("url");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Chunk_chunkHash_key" ON "Chunk"("chunkHash");
+CREATE UNIQUE INDEX "chunks_chunkHash_key" ON "chunks"("chunkHash");
 
 -- CreateIndex for Full-Text Search
-CREATE INDEX "chunks_tsv_gin" ON "Chunk" USING GIN ("tsv");
+CREATE INDEX "chunks_tsv_gin" ON "chunks" USING GIN ("tsv");
 
 -- AddForeignKey
-ALTER TABLE "Chunk" ADD CONSTRAINT "Chunk_documentId_fkey" FOREIGN KEY ("documentId") REFERENCES "Document"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "chunks" ADD CONSTRAINT "chunks_documentId_fkey" FOREIGN KEY ("documentId") REFERENCES "documents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ChunkEmbedding" ADD CONSTRAINT "ChunkEmbedding_chunkId_fkey" FOREIGN KEY ("chunkId") REFERENCES "Chunk"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "chunk_embeddings" ADD CONSTRAINT "chunk_embeddings_chunkId_fkey" FOREIGN KEY ("chunkId") REFERENCES "chunks"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- CreateIndex for Vector Search (HNSW)
-CREATE INDEX "ChunkEmbedding_embedding_idx" ON "ChunkEmbedding" USING hnsw ("embedding" vector_cosine_ops);
+CREATE INDEX "chunk_embeddings_embedding_idx" ON "chunk_embeddings" USING hnsw ("embedding" vector_cosine_ops);
