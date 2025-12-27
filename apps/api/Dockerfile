@@ -21,7 +21,8 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY . .
 
 # Generate Prisma Client
-RUN pnpm -C apps/api prisma:generate
+ARG DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb"
+RUN DATABASE_URL="${DATABASE_URL}" pnpm -C apps/api prisma:generate
 
 # In Dev, we override command normally, but here is a default
 CMD ["pnpm", "-C", "apps/api", "start:dev"]
