@@ -54,7 +54,7 @@ class SiteSpider(BaseSpider):
         if not self.start_urls:
             raise ValueError(f"Missing env SITE_{site_key}_START_URLS")
 
-    def start_requests(self):
+    async def start(self):
         for url in self.start_urls:
             yield self.make_request(
                 url,
