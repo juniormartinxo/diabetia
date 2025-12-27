@@ -7,11 +7,14 @@ services:
     restart: always
     shm_size: 128mb
     networks:
-      - ${NETWORK_NAME}
+      - diabes-net
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_PORT_HOST: ${POSTGRES_PORT_HOST}      
     ports:
       - '${POSTGRES_PORT_HOST}:${POSTGRES_PORT}'
     volumes:
@@ -24,20 +27,24 @@ services:
       retries: 5
 
   redis:
-    build: .docker/redis
+    build: infra/redis
     image: redis:7.4.0-alpine
     container_name: ${REDIS_CONTAINER_NAME}
     restart: always
     ports:
       - '${REDIS_EXTERNAL_PORT}:${REDIS_INTERNAL_PORT}'
     environment:
-      - REDIS_ARGS=--save 60 1 --appendonly yes
+      REDIS_ARGS: --save 60 1 --appendonly yes
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_URL: ${REDIS_URL}
+      REDIS_INTERNAL_PORT: ${REDIS_INTERNAL_PORT}
+      REDIS_EXTERNAL_PORT: ${REDIS_EXTERNAL_PORT}
     networks:
-      - ${NETWORK_NAME}
+      - diabes-net
     volumes:
-      - .docker/redis-data:/var/lib/redis/data
-      - .docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
-      - .docker/redis/logs:/var/log/redis
+      - infra/redis-data:/var/lib/redis/data
+      - infra/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - infra/redis/logs:/var/log/redis
     command: >
       sh -c "redis-server /usr/local/etc/redis/redis.conf 
       --port ${REDIS_INTERNAL_PORT} 
@@ -60,7 +67,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - ${NETWORK_NAME}
+      - diabes-net
 
   api:
     init: true
@@ -88,7 +95,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - ${NETWORK_NAME}
+      - diabes-net
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
@@ -108,7 +115,7 @@ services:
       api:
         condition: service_started
     networks:
-      - ${NETWORK_NAME}
+      - diabes-net
 
   embedder:
     init: true
@@ -123,11 +130,11 @@ services:
       api:
         condition: service_started
     networks:
-      - ${NETWORK_NAME}
+      - diabes-net
 
 volumes:
   postgres_data:
 
 networks:
-  ${NETWORK_NAME}:
+  diabes-net:
     driver: bridge
