@@ -46,3 +46,5 @@ Thumbs.db
 # Misc
 tmp/
 .cache/
+dump.rdb
+appendonly.aof
