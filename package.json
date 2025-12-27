@@ -7,7 +7,9 @@
     "down": "docker compose --env-file .env -f infra/docker-compose.yml down",
     "prisma:generate": "pnpm -C apps/api prisma generate",
     "migrate:dev": "pnpm -C apps/api prisma migrate dev",
-    "exec:bash": "docker compose --env-file .env -f infra/docker-compose.yml exec api bash"
+    "bash:api": "docker compose --env-file .env -f infra/docker-compose.yml exec api bash",
+    "bash:crawler": "docker compose --env-file .env -f infra/docker-compose.yml exec crawler bash",
+    "bash:embedder": "docker compose --env-file .env -f infra/docker-compose.yml exec embedder bash"
   },
   "packageManager": "pnpm@9.0.0"
 }
