@@ -1,11 +1,11 @@
-# Diabes - Infraestrutura Local
+# Diabetia - Infraestrutura Local
 
-Este repositório contém o monorepo do projeto **Diabes**, configurado com Docker Compose para desenvolvimento local.
+Este repositório contém o monorepo do projeto **Diabetia**, configurado com Docker Compose para desenvolvimento local.
 
 ## Estrutura do Monoretório
 
 ```
-diabes/
+diabetia/
 ├── apps/
 │   ├── api/        # NestJS API + Prisma
 │   ├── crawler/    # Python Crawler Worker
@@ -42,7 +42,7 @@ diabes/
 | Serviço  | URL Interna | Porta Host | Descrição |
 |----------|-------------|------------|-----------|
 | API      | `api`       | 3000       | NestJS API (Swagger em /api) |
-| Postgres | `postgres`  | -          | Banco de Dados (user: postgres, pass: postgres, db: diabes) |
+| Postgres | `postgres`  | -          | Banco de Dados (user: postgres, pass: postgres, db: diabetia) |
 | Redis    | `redis`     | -          | Cache e Fila |
 | Adminer  | `adminer`   | 8080       | Interface Web para o Banco de Dados |
 
@@ -76,7 +76,7 @@ npm run down
 docker compose -f infra/docker-compose.yml logs -f api
 
 # Acessar shell do Postgres
-docker compose -f infra/docker-compose.yml exec postgres psql -U postgres -d diabes
+docker compose -f infra/docker-compose.yml exec postgres psql -U postgres -d diabetia
 ```
 
 ## Checklist de Validação
