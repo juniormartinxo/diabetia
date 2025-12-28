@@ -7,7 +7,7 @@ services:
     restart: always
     shm_size: 128mb
     networks:
-      - diabes-net
+      - diabetia-net
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -40,7 +40,7 @@ services:
       REDIS_INTERNAL_PORT: ${REDIS_INTERNAL_PORT}
       REDIS_EXTERNAL_PORT: ${REDIS_EXTERNAL_PORT}
     networks:
-      - diabes-net
+      - diabetia-net
     volumes:
       - ./redis-data:/var/lib/redis/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
@@ -59,7 +59,7 @@ services:
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
-    container_name: diabes_migrate
+    container_name: diabetia_migrate
     command: sh -c "pnpm -C apps/api prisma:deploy"
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -67,7 +67,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - diabes-net
+      - diabetia-net
 
   api:
     init: true
@@ -95,7 +95,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - diabes-net
+      - diabetia-net
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
       interval: 10s
@@ -117,7 +117,7 @@ services:
       api:
         condition: service_started
     networks:
-      - diabes-net
+      - diabetia-net
 
   embedder:
     init: true
@@ -132,11 +132,11 @@ services:
       api:
         condition: service_started
     networks:
-      - diabes-net
+      - diabetia-net
 
 volumes:
   postgres_data:
 
 networks:
-  diabes-net:
+  diabetia-net:
     driver: bridge
